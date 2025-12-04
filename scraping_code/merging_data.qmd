@@ -1,0 +1,39 @@
+---
+title: "Untitled"
+format: html
+---
+
+
+```{python}
+import pandas as pd
+```
+
+
+```{python}
+utah = pd.read_csv('utah_trails.csv')
+```
+
+
+```{python}
+pennsylvania = pd.read_csv('pennsylvania_trails.csv')
+```
+
+
+```{python}
+indiana = pd.read_csv('indiana_trails.csv')
+```
+
+
+```{python}
+all_trails = [utah,pennsylvania,indiana]
+```
+
+
+```{python}
+all_trails_df = pd.concat(all_trails)
+```
+
+
+```{python}
+all_trails_df.to_csv('all_trails.csv', index=False)
+```

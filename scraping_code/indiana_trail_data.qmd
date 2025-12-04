@@ -1,0 +1,118 @@
+---
+title: "Untitled"
+format: html
+---
+
+```{python}
+links = pd.read_csv('indiana_links.csv')
+
+links['numbers'] = links['link'].str.extract('([0-9]{7}.*)')
+
+indiana_list = links['numbers'].tolist()
+```
+
+
+```{python}
+
+empty_list = []
+
+for i in indiana_list:
+
+    test_link = f'https://www.hikingproject.com/trail/{i}'
+    headers = {
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                  "AppleWebKit/537.36 (KHTML, like Gecko) "
+                  "Chrome/122.0.0.0 Safari/537.36"
+    }
+    test_req = requests.get(test_link,headers=headers) 
+    test_soup = BeautifulSoup(test_req.content)
+
+    stats = test_soup.select('div#trail-stats-bar.mt-2')
+    stat_range = range(0,len(stats))
+
+    stat_data = [stats[x].text for x in stat_range]
+    stat_df = pd.DataFrame({'stats':stat_data})
+
+    stat_df['stats'] = stat_df['stats'].str.split(r"\s*\n\s*")
+    stat_df = stat_df['stats'].explode()
+    stat_df = stat_df.reset_index()
+    stat_df = stat_df.drop('index',axis=1)
+    stat_df = stat_df.T.reset_index(drop=True)
+    stat_df = stat_df.drop(columns=[0,2,5,6,8,9,11,12,14,15,17,19,20])
+
+    stat_df.columns = ['distance(mi)', 'type','max_height(ft)','min_height(ft)','ascent(ft)','descent(ft)','avg_grade(%)','max_grade(%)']
+
+    stat_df['distance(mi)'] = stat_df['distance(mi)'].str.replace('Miles','',regex=True)
+
+    stat_df['max_height(ft)'] = stat_df['max_height(ft)'].str.replace(",|'",'',regex=True)
+
+    stat_df['min_height(ft)'] = stat_df['min_height(ft)'].str.replace(",|'",'',regex=True)
+
+    stat_df['ascent(ft)'] = stat_df['ascent(ft)'].str.replace(",|'",'',regex=True)
+
+    stat_df['descent(ft)'] = stat_df['descent(ft)'].str.replace(",|'",'',regex=True)
+
+    stat_df['avg_grade(%)'] = stat_df['avg_grade(%)'].str.replace("%.*",'',regex=True)
+
+    stat_df['max_grade(%)'] = stat_df['max_grade(%)'].str.replace("%.*",'',regex=True)
+
+    stat_df['distance(mi)'] = pd.to_numeric(stat_df['distance(mi)'],errors='coerce')
+
+    stat_df['max_height(ft)'] = pd.to_numeric(stat_df['max_height(ft)'],errors='coerce')
+
+    stat_df['min_height(ft)'] = pd.to_numeric(stat_df['min_height(ft)'],errors='coerce')
+
+    stat_df['ascent(ft)'] = pd.to_numeric(stat_df['ascent(ft)'],errors='coerce')
+
+    stat_df['descent(ft)'] = pd.to_numeric(stat_df['descent(ft)'],errors='coerce')
+
+    stat_df['avg_grade(%)'] = pd.to_numeric(stat_df['avg_grade(%)'],errors='coerce')
+
+    stat_df['max_grade(%)'] = pd.to_numeric(stat_df['max_grade(%)'],errors='coerce')
+
+    trail_name = test_soup.select('h1#trail-title')
+    name_range = range(0,len(trail_name))
+    trail_name_text = [trail_name[x].text for x in name_range]
+    stat_df['trail_name'] = trail_name_text
+    stat_df['trail_name'] = stat_df['trail_name'].str.replace('\s{2}','',regex=True)
+    stat_df['trail_name'] = stat_df['trail_name'].str.replace('^\s|\s$','',regex=True)
+
+    difficulty = test_soup.select('span.difficulty-text')
+    difficulty_range = range(0,len(difficulty))
+    difficulty_text = [difficulty[x].text for x in difficulty_range]
+    stat_df['difficulty'] = difficulty_text[0]
+
+    rating = test_soup.select('span.small')
+    rating_range = range(0,len(rating))
+    rating_text = [rating[x].text for x in rating_range]
+    stat_df['rating'] = rating_text[0]
+    stat_df['rating'] = stat_df['rating'].str.replace('\ (.*)','',regex=True)
+    stat_df['rating'] = stat_df['rating'].str.replace('^\s','',regex=True)
+    stat_df['rating'] = pd.to_numeric(stat_df['rating'],errors='coerce')
+
+    description = test_soup.select('div.mb-1')
+    description_range = range(0,len(description))
+    description_text = [description[x].text for x in description_range]
+    stat_df['description'] = description_text[2]
+    stat_df['description'] = stat_df['description'].str.replace('^\s','',regex=True)
+
+    stat_df['state'] = 'IN'
+
+    empty_list.append(stat_df)
+
+```
+
+
+```{python}
+indiana_trail_df = pd.concat(empty_list).reset_index()
+```
+
+
+```{python}
+indiana_trail_df = indiana_trail_df.drop(columns=['index'])
+```
+
+
+```{python}
+indiana_trail_df.to_csv('indiana_trails.csv', index=False)
+```
