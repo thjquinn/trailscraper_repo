@@ -5,7 +5,7 @@
 
 This is a simple Streamlit app to explore and filter trails from
 `all_trails.csv`. A dataset made from scraping hikingproject.com.
-Currently, there is data from all of the sites’ available trails in
+Currently, there is data from all of the site's available trails in
 Indiana, Utah, and Pennsylvania.
 
 ## Requirements
